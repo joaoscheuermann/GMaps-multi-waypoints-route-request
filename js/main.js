@@ -1,4 +1,4 @@
-const teste = new multiRouteRequest();
+const teste = new MWRQ();
 
 let map;
 let directionsService;

@@ -1,4 +1,4 @@
-function multiRouteRequest() {
+function MWRQ() {
 
     function logger(toLog) {
       console.log(`[MWRQ]: ${toLog}`);
