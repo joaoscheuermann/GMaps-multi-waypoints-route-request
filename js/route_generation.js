@@ -1,7 +1,7 @@
 function multiRouteRequest() {
 
     function logger(toLog) {
-      
+      console.log(`[MWRQ]: ${toLog}`);
     }
     //Agroup the array to a max given number.
     function agroupArray(data, max_gs) {
@@ -57,7 +57,7 @@ function multiRouteRequest() {
                 origin: data[i].start,
                 destination: data[i].end,
                 waypoints: data[i].wp,
-                travelMode: google.maps.TravelMode.DRIVING
+                travelMode: google.maps.TravelMode.WALKING
             };
             directionsService.route(request, (result, status) => {
                 if (status == google.maps.DirectionsStatus.OK) {

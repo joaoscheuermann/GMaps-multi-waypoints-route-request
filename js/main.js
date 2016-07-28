@@ -2,6 +2,7 @@ const teste = new multiRouteRequest();
 
 let map;
 let directionsService;
+let directionsDisplay;
 
 function init() {
     let mapOptions = {
@@ -35,9 +36,9 @@ window.onload = () => {
 
     console.log("A double click calls the calcRoute method, process the data and return a array with all the ordened results");
     map.addListener('dblclick', (e) => {
-        teste.calcRoute(wp, 10, (data, status) => {
+        teste.calcRoute(wp, 10, (result, status) => {
             if (status == 'READY') {
-                console.log(status, data);
+              console.log(result);
             }
         })
         wp = [];
