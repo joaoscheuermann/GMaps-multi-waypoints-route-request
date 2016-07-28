@@ -1,87 +1,35 @@
-global.rootRequire = function(name) {
-    return require(__dirname + '/' + name);
-}
+function multiRouteRequest() {
 
-
-function route_generation() {
-    let markers_cache = [];
-
-    function addMarker(location) {
-        if (markers_cache.length <= 500) {
-            let marker = new google.maps.Marker({
-                position: location,
-                map: map,
-                draggable: true
-            });
-            markers_cache.push(marker);
-            markers_cache[markers_cache.length-1].addListener('click', ()=> {
-              console.log('teste');
-            });
-        }
-    }
-
-    function removeLastMarker() {
-        if (markers_cache.length - 1 >= 0) {
-            markers_cache[markers_cache.length - 1].setMap(null);
-            markers_cache.splice(markers_cache.length - 1, 1);
-        }
-    }
-
-    function removeAllMarkers() {
-        if (markers_cache.length > 0) {
-            for (i in markers_cache) {
-                markers_cache[i].setMap(null);
-            }
-            markers_cache = [];
-        }
-        google.maps.event.clearListeners(markers_cache, 'click');
-    }
-
-
-    function getAllMarkerPos() {
-        let returnData = [];
-        if (markers_cache.length - 1 >= 0) {
-            for (let i in markers_cache) {
-                returnData.push({
-                    lat: markers_cache[i].position.lat(),
-                    lng: markers_cache[i].position.lng()
-                })
-            }
-            console.log('[ALL M POS]: ', returnData);
-            return returnData;
-        } else { /*do something*/ }
-    }
-
-    function agroupArray(data, MWP) {
-        let MAX_WAY_POINTS = MWP;
+    //Agroup the array to a max given number.
+    function agroupArray(data, max_gs, max_s_rq) {        
+        let max_group_size = max_gs;
+        let max_s_requests = max_s_rq;
         let lastPos = 0;
         let returnData = [];
         if (data != undefined && data.length > 0) {
-            for (let i = 0; i < data.length + MAX_WAY_POINTS; i += MAX_WAY_POINTS) {
+            for (let i = 0; i < data.length + max_group_size; i += max_group_size) {
                 if (i > 0) {
-                    let arrayTarget = i;
                     let arrayCoords = []
-                    for (let j = lastPos; j < arrayTarget; j++) {
+                    for (let j = lastPos; j < i; j++) {
                         if (data[j] !== undefined) {
                             arrayCoords.push(data[j]);
                         }
                     }
                     returnData.push(arrayCoords);
-                    lastPos = arrayTarget;
+                    lastPos = i;
                 }
             }
         }
-        console.log('[AGROUPED ARRAY]: ', returnData);
         return returnData;
     };
 
+    //Format the data to send the request;
     function formatData(data) {
-        console.log(data);
         let returnData = []
         for (let i in data) {
             let start = data[i].shift();
             let end = data[i].pop();
-            let wp = [];
+            let wp = []; //Waypoints
             for (let j in data[i]) {
                 wp.push({
                     location: data[i][j],
@@ -94,13 +42,11 @@ function route_generation() {
                 wp: wp
             });
         }
-        console.log('[FORMATED DATA]: ', returnData);
         return returnData;
     }
 
-
+    //Faz as solicitaçoes e organiza os resultados em ordem crescente.
     function calcRoute(data, callback) {
-        console.log(data);
         let recived_data = [];
         for (let i in data) {
             let request = {
@@ -111,24 +57,10 @@ function route_generation() {
                 travelMode: google.maps.TravelMode.WALKING
             };
 
-            directionsService.route(request, function(result, status) {
-                console.log('STATUS :', status);
+            directionsService.route(request, (result, status) => {
                 if (status == google.maps.DirectionsStatus.OK) {
-                    console.log('[R REQUEST RESPONSE]: ', result);
-                    let path = result.routes[0].legs[0].steps;
-                    console.log(path);
-                    let coords_cache = [];
-                    for (let j in path) {
-                        let rr = path[j].lat_lngs //google.maps.geometry.encoding.decodePath(path[j].encoded_lat_lngs);
-                        for (var k in rr) {
-                            coords_cache.push({
-                                lat: rr[k].lat(),
-                                lng: rr[k].lng()
-                            });
-                        }
-                    }
                     recived_data.push({
-                        coords: coords_cache,
+                        coords: result,
                         id: i
                     });
                     passResult();
@@ -157,43 +89,48 @@ function route_generation() {
         }
     }
 
-    function onDone() {
-        let marker_pos = getAllMarkerPos();
-        let agrouped_array = agroupArray(marker_pos, 10);
-        let formated_data = formatData(agrouped_array);
-        calcRoute(formated_data, (data, status) => {
-            if (status == 'OK') {
-                let route = {
-                    id: '',
-                    name: bar_center.name,
-                    settings: false,
-                    data: {
-                        coords: data
-                    }
-                }
-                routes_cache.push(route);
-                bar_center.cancel();
-            }
-        });
+    //COORDS INPUT =>  {lat: xxx, lng: xxx}
+    this.calcRoute = (points, max_gs, max_s_rq, callback) => {
+      calcRoute(formatData(agroupArray(points, max_gs, max_s_rq)) ,(data, status) => {
+          callback(data, status);
+      });
     }
-
-    //EXPORT FUNCIONALITY
-    this.addMarker = (e) => {
-        addMarker(e);
-    }
-
-    this.removeLastMarker = () => {
-        removeLastMarker();
-    }
-
-    this.removeAllMarkers = () => {
-        removeAllMarkers();
-    }
-
-    this.onDone = () => {
-        onDone();
-    }
-
 }
 
-module.exports = new route_generation();
+
+
+/*
+function onDone() {
+    let marker_pos = getAllMarkerPos();
+    let agrouped_array = agroupArray(marker_pos, 10);
+    let formated_data = formatData(agrouped_array);
+    calcRoute(formated_data, (data, status) => {
+        if (status == 'OK') {
+            let route = {
+                id: '',
+                name: bar_center.name,
+                settings: false,
+                data: {
+                    coords: data
+                }
+            }
+            routes_cache.push(route);
+            bar_center.cancel();
+        }
+    });
+}
+
+//Estrair apenas as coordenadas da rota.
+let path = result.routes[0].legs[0].steps;
+
+let coords_cache = [];
+for (let j in path) {
+    let rr = path[j].lat_lngs //google.maps.geometry.encoding.decodePath(path[j].encoded_lat_lngs);
+    for (var k in rr) {
+        coords_cache.push({
+            lat: rr[k].lat(),
+            lng: rr[k].lng()
+        });
+    }
+}
+*/
