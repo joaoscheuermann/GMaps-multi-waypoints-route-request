@@ -1,6 +1,4 @@
-#Google Maps route request with only the waypoints
-
-###INTRO:
+#GMAPS MULTI WAYPOINTS ROUTE REQUEST
 
 ### HOW TO USE: 
 
